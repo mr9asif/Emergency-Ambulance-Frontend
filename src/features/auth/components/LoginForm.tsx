@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Ambulance,
   ArrowRight,
@@ -13,15 +14,65 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+import {
+  loginSchema,
+  type LoginFormValues,
+} from "@/features/auth/schemas/auth.schema";
+
+import { useLogin } from "@/features/auth/hooks/useLogin";
+import axios from "axios";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const { mutate: loginMutation, isPending } = useLogin();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = (data: LoginFormValues) => {
+    loginMutation(data, {
+      onSuccess: (response) => {
+        toast.success(response.message || "Login successful!");
+        router.push("/");
+      },
+
+      onError: (error) => {
+        if (axios.isAxiosError(error)) {
+          const message =
+            error.response?.data?.message ?? "Invalid email or password";
+
+          toast.error(message);
+          return;
+        }
+
+        toast.error("Something went wrong. Please try again.");
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen flex bg-white dark:bg-black selection:bg-red-500/30">
       {/* =========================================================
           LEFT SIDE — 50% EMERGENCY VISUAL
       ========================================================= */}
+
       <section className="hidden lg:flex lg:w-1/2 min-h-screen relative overflow-hidden bg-[#09090b]">
         {/* Background Image */}
+
         <Image
           src="/images/ambulance-hero.jpg"
           alt="Emergency ambulance response"
@@ -32,17 +83,21 @@ export default function LoginPage() {
         />
 
         {/* Dark overlay */}
+
         <div className="absolute inset-0 bg-black/55" />
 
         {/* Red cinematic gradient */}
+
         <div className="absolute inset-0 bg-gradient-to-br from-red-950/80 via-black/30 to-black/85" />
 
         {/* Red glow */}
+
         <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-red-600/20 rounded-full blur-[120px]" />
 
         <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[120px]" />
 
         {/* Grid */}
+
         <div
           className="absolute inset-0 opacity-20"
           style={{
@@ -53,8 +108,10 @@ export default function LoginPage() {
         />
 
         {/* Content */}
+
         <div className="relative z-10 w-full min-h-screen flex flex-col justify-between p-8 xl:p-12 2xl:p-16">
           {/* Top */}
+
           <div className="flex items-center justify-between">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-white">
               <span className="relative flex h-2.5 w-2.5">
@@ -74,6 +131,7 @@ export default function LoginPage() {
           </div>
 
           {/* Main Content */}
+
           <div className="max-w-xl">
             <div className="flex items-center gap-2 mb-5">
               <div className="h-px w-10 bg-red-500" />
@@ -95,8 +153,10 @@ export default function LoginPage() {
             </p>
 
             {/* Stats */}
+
             <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
               {/* Fast Response */}
+
               <div className="rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 p-3 sm:p-4">
                 <Clock3 className="w-5 h-5 text-red-400 mb-3" />
 
@@ -110,6 +170,7 @@ export default function LoginPage() {
               </div>
 
               {/* Smart Dispatch */}
+
               <div className="rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 p-3 sm:p-4">
                 <MapPin className="w-5 h-5 text-red-400 mb-3" />
 
@@ -123,6 +184,7 @@ export default function LoginPage() {
               </div>
 
               {/* Connected */}
+
               <div className="rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 p-3 sm:p-4">
                 <Users className="w-5 h-5 text-red-400 mb-3" />
 
@@ -138,6 +200,7 @@ export default function LoginPage() {
           </div>
 
           {/* Bottom */}
+
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center shrink-0">
@@ -162,11 +225,13 @@ export default function LoginPage() {
       </section>
 
       {/* =========================================================
-          RIGHT SIDE — 50% LOGIN FORM
+          RIGHT SIDE — LOGIN FORM
       ========================================================= */}
+
       <section className="w-full lg:w-1/2 min-h-screen flex flex-col justify-center bg-white dark:bg-black relative z-20">
         <div className="w-full max-w-md mx-auto px-5 sm:px-8 lg:px-10 xl:px-12 py-10">
           {/* Logo */}
+
           <Link href="/" className="flex items-center gap-2 mb-10 group w-fit">
             <div className="bg-red-500 p-2 rounded-xl text-white shadow-lg shadow-red-500/20 group-hover:scale-105 transition-transform">
               <Ambulance size={24} strokeWidth={2.5} />
@@ -178,6 +243,7 @@ export default function LoginPage() {
           </Link>
 
           {/* Heading */}
+
           <div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
               Welcome back
@@ -189,9 +255,11 @@ export default function LoginPage() {
           </div>
 
           {/* Form */}
+
           <div className="mt-8">
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
               {/* Email */}
+
               <div>
                 <label
                   htmlFor="email"
@@ -207,11 +275,10 @@ export default function LoginPage() {
 
                   <input
                     id="email"
-                    name="email"
                     type="email"
                     autoComplete="email"
-                    required
                     placeholder="Enter your email"
+                    {...register("email")}
                     className="
                       appearance-none
                       block
@@ -239,9 +306,16 @@ export default function LoginPage() {
                     "
                   />
                 </div>
+
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
               {/* Password */}
+
               <div>
                 <label
                   htmlFor="password"
@@ -257,11 +331,10 @@ export default function LoginPage() {
 
                   <input
                     id="password"
-                    name="password"
                     type="password"
                     autoComplete="current-password"
-                    required
                     placeholder="Enter your password"
+                    {...register("password")}
                     className="
                       appearance-none
                       block
@@ -289,9 +362,16 @@ export default function LoginPage() {
                     "
                   />
                 </div>
+
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               {/* Remember + Forgot */}
+
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center">
                   <input
@@ -337,8 +417,10 @@ export default function LoginPage() {
               </div>
 
               {/* Sign In */}
+
               <button
                 type="submit"
+                disabled={isPending}
                 className="
                   w-full
                   flex
@@ -362,14 +444,18 @@ export default function LoginPage() {
                   focus:ring-red-500
                   transition-all
                   active:scale-[0.98]
+                  disabled:opacity-70
+                  disabled:cursor-not-allowed
                 "
               >
-                Sign in
-                <ArrowRight className="w-4 h-4" />
+                {isPending ? "Signing in..." : "Sign in"}
+
+                {!isPending && <ArrowRight className="w-4 h-4" />}
               </button>
             </form>
 
             {/* Divider */}
+
             <div className="mt-8">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -384,6 +470,7 @@ export default function LoginPage() {
               </div>
 
               {/* Register */}
+
               <div className="mt-6">
                 <Link
                   href="/register"
@@ -421,8 +508,10 @@ export default function LoginPage() {
           </div>
 
           {/* Security */}
+
           <div className="mt-8 flex items-center justify-center gap-2 text-xs text-zinc-400">
             <ShieldCheck className="w-4 h-4" />
+
             <span>Your information is securely protected</span>
           </div>
         </div>
