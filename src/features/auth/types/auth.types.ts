@@ -5,7 +5,6 @@ export interface RegisterRequest {
   email: string;
   phone: string;
   password: string;
-  role: UserRole;
 }
 
 export interface LoginRequest {
@@ -16,9 +15,12 @@ export interface LoginRequest {
 export interface AuthUser {
   id: string;
   name: string;
-  email: string;
-  phone?: string;
+  phone: string;
+  email?: string | null;
+  profileImage?: string | null;
   role: UserRole;
+
+  emailVerified: boolean;
 }
 
 export interface AuthResponse {
