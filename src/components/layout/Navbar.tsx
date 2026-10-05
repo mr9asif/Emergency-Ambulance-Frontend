@@ -1,12 +1,12 @@
 "use client";
 
+import { UserRole } from "@/features/auth/types/auth.types";
 import { useQueryClient } from "@tanstack/react-query";
 import { Ambulance, ChevronDown, LogOut, Menu, User, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
 import DefaultImage from "../../../public/images/default-profile.jpeg";
 
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
@@ -87,6 +87,26 @@ export function Navbar() {
             >
               How it Works
             </Link>
+
+            {/* Dashboard */}
+            {!isLoading && user && (
+              <Link
+                href="/dashboard"
+                className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+              >
+                Dashboard
+              </Link>
+            )}
+
+            {/* Emergency Request */}
+            {!isLoading && user?.role === UserRole.CUSTOMER && (
+              <Link
+                href="/emergency-request"
+                className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+              >
+                Emergency Request
+              </Link>
+            )}
 
             <Link
               href="/contact"

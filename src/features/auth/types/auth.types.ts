@@ -1,5 +1,8 @@
-export type UserRole = "PATIENT" | "DISPATCHER" | "AMBULANCE_DRIVER" | "ADMIN";
-
+export enum UserRole {
+  ADMIN = "ADMIN",
+  OPERATOR = "OPERATOR",
+  CUSTOMER = "CUSTOMER",
+}
 export interface RegisterRequest {
   name: string;
   email: string;
