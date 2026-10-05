@@ -1,5 +1,6 @@
 import apiClient from "@/lib/axios";
 
+import uploadClient from "@/lib/uploadClient";
 import type {
   AuthResponse,
   AuthUser,
@@ -41,6 +42,28 @@ export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
 
 export async function logout() {
   const response = await apiClient.post("/api/auth/logout");
+
+  return response.data;
+}
+
+export async function updateProfileImage(file: File) {
+  const formData = new FormData();
+
+  formData.append("profileImage", file);
+
+  const response = await uploadClient.patch(
+    "/api/auth/profile-image",
+    formData,
+  );
+
+  return response.data;
+}
+
+// Update profile name
+export async function updateProfileName(name: string) {
+  const response = await apiClient.patch("/api/auth/profile-name", {
+    name,
+  });
 
   return response.data;
 }
