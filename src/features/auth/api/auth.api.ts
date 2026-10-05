@@ -38,3 +38,9 @@ export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
 
   return response.data;
 };
+
+export async function logout() {
+  const response = await apiClient.post("/api/auth/logout");
+
+  return response.data;
+}

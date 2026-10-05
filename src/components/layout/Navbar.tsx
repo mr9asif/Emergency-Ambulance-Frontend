@@ -1,34 +1,45 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Ambulance, ChevronDown, LogOut, Menu, User, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
 import DefaultImage from "../../../public/images/default-profile.jpeg";
 
-// Change this import according to your project structure
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { useLogout } from "@/features/auth/hooks/useLogout";
 
 export function Navbar() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const { data: user, isLoading } = useCurrentUser();
-  console.log("user", user);
+
+  const { mutate: logoutMutation, isPending: isLoggingOut } = useLogout();
 
   const handleLogout = () => {
-    // Remove authentication cookies
-    document.cookie = "accessToken=; path=/; max-age=0";
-    document.cookie = "refreshToken=; path=/; max-age=0";
+    logoutMutation(undefined, {
+      onSuccess: () => {
+        // Remove current user from React Query cache
+        queryClient.removeQueries({
+          queryKey: ["currentUser"],
+        });
 
-    setIsProfileOpen(false);
-    setIsOpen(false);
+        // Close dropdowns
+        setIsProfileOpen(false);
+        setIsOpen(false);
 
-    router.push("/login");
-    router.refresh();
+        // Redirect to login
+        router.push("/login");
+        router.refresh();
+      },
+    });
   };
 
   const getInitial = () => {
@@ -94,15 +105,13 @@ export function Navbar() {
               /* Logged In User */
               <div className="relative">
                 <button
+                  type="button"
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 rounded-full p-1.5 transition-all hover:bg-gray-100 dark:hover:bg-zinc-800"
                 >
                   {/* Profile Image */}
                   <Image
-                    src={
-                      user.profileImage ||
-                      "../../../public/images/default-profile.jpeg"
-                    }
+                    src={user.profileImage || DefaultImage}
                     alt={user.name || "Profile"}
                     width={42}
                     height={42}
@@ -153,6 +162,7 @@ export function Navbar() {
                     <div className="p-2">
                       {/* Profile */}
                       <button
+                        type="button"
                         onClick={() => {
                           setIsProfileOpen(false);
                           router.push("/profile");
@@ -165,11 +175,14 @@ export function Navbar() {
 
                       {/* Logout */}
                       <button
+                        type="button"
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-gray-200 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                        disabled={isLoggingOut}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-200 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                       >
                         <LogOut size={18} />
-                        Logout
+
+                        {isLoggingOut ? "Logging out..." : "Logout"}
                       </button>
                     </div>
                   </div>
@@ -198,6 +211,7 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <div className="flex items-center md:hidden">
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300"
               aria-label="Toggle menu"
@@ -245,7 +259,6 @@ export function Navbar() {
             </Link>
 
             {/* Mobile Auth */}
-            {/* Mobile Auth */}
             <div className="mt-5 border-t border-gray-100 pt-5 dark:border-zinc-800">
               {isLoading ? (
                 <div className="h-20 w-full animate-pulse rounded-2xl bg-gray-100 dark:bg-zinc-900" />
@@ -278,6 +291,7 @@ export function Navbar() {
 
                   {/* Profile */}
                   <button
+                    type="button"
                     onClick={() => {
                       setIsOpen(false);
                       router.push("/profile");
@@ -293,14 +307,16 @@ export function Navbar() {
 
                   {/* Logout */}
                   <button
+                    type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+                    disabled={isLoggingOut}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-500/10"
                   >
                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-500 dark:bg-red-500/10">
                       <LogOut size={18} />
                     </span>
 
-                    <span>Logout</span>
+                    <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
                   </button>
                 </div>
               ) : (
