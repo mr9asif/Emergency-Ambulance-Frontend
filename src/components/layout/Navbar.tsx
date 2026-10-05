@@ -91,7 +91,7 @@ export function Navbar() {
             {/* Dashboard */}
             {!isLoading && user && (
               <Link
-                href="/dashboard"
+                href="/patient/dashboard"
                 className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
               >
                 Dashboard
