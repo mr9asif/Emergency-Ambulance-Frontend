@@ -139,9 +139,7 @@ const SidebarItem = ({ item, pathname, setSidebarOpen }: any) => {
         <div className="mt-1 space-y-1 px-3">
           <div className="border-l-2 border-slate-100 ml-2 pl-4 py-1 space-y-1">
             {item.children.map((child: any) => {
-              const isChildActive =
-                pathname === child.href ||
-                pathname.startsWith(child.href + "/");
+              const isChildActive = pathname === child.href;
               return (
                 <Link
                   key={child.name}
