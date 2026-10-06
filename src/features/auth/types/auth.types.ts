@@ -33,3 +33,13 @@ export interface AuthResponse {
     user?: AuthUser;
   };
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  otp: string;
+  newPassword: string;
+}

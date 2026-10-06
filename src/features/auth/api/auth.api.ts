@@ -4,8 +4,10 @@ import uploadClient from "@/lib/uploadClient";
 import type {
   AuthResponse,
   AuthUser,
+  ForgotPasswordRequest,
   LoginRequest,
   RegisterRequest,
+  ResetPasswordRequest,
 } from "../types/auth.types";
 
 interface CurrentUserResponse {
@@ -67,3 +69,23 @@ export async function updateProfileName(name: string) {
 
   return response.data;
 }
+
+export const forgotPassword = async (
+  payload: ForgotPasswordRequest,
+): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>(
+    "/api/auth/forgot-password",
+    payload,
+  );
+  return response.data;
+};
+
+export const resetPassword = async (
+  payload: ResetPasswordRequest,
+): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>(
+    "/api/auth/reset-password",
+    payload,
+  );
+  return response.data;
+};
