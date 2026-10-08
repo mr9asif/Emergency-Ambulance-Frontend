@@ -5,8 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Ambulance, ChevronDown, LogOut, Menu, User, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import DefaultImage from "../../../public/images/default-profile.jpeg";
 
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
@@ -14,7 +14,28 @@ import { useLogout } from "@/features/auth/hooks/useLogout";
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
+  const [activeHash, setActiveHash] = useState("");
+
+  useEffect(() => {
+    setActiveHash(window.location.hash);
+    const onHashChange = () => setActiveHash(window.location.hash);
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const isActive = (href: string) => {
+    if (href.includes("#")) {
+      const hash = href.substring(href.indexOf("#"));
+      return pathname === "/" && activeHash === hash;
+    }
+    if (href === "/") {
+      return pathname === "/" && !activeHash;
+    }
+
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -69,21 +90,22 @@ export function Navbar() {
           <div className="hidden items-center space-x-8 md:flex">
             <Link
               href="/"
-              className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+              className={`text-sm font-semibold transition-colors ${
+                isActive("/")
+                  ? "text-red-500"
+                  : "text-gray-600 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+              }`}
             >
               Home
             </Link>
 
             <Link
-              href="#features"
-              className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
-            >
-              Features
-            </Link>
-
-            <Link
-              href="#roles"
-              className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+              href="/#roles"
+              className={`text-sm font-semibold transition-colors ${
+                isActive("/#roles")
+                  ? "text-red-500"
+                  : "text-gray-600 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+              }`}
             >
               How it Works
             </Link>
@@ -92,7 +114,11 @@ export function Navbar() {
             {!isLoading && user && (
               <Link
                 href="/patient/dashboard"
-                className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+                className={`text-sm font-semibold transition-colors ${
+                  isActive("/patient/dashboard")
+                    ? "text-red-500"
+                    : "text-gray-600 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+                }`}
               >
                 Dashboard
               </Link>
@@ -101,8 +127,12 @@ export function Navbar() {
             {/* Emergency Request */}
             {!isLoading && user?.role === UserRole.CUSTOMER && (
               <Link
-                href="/emergency-request"
-                className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+                href="/patient/emergency/request"
+                className={`text-sm font-semibold transition-colors ${
+                  isActive("/patient/emergency/request")
+                    ? "text-red-500"
+                    : "text-gray-600 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+                }`}
               >
                 Emergency Request
               </Link>
@@ -110,7 +140,11 @@ export function Navbar() {
 
             <Link
               href="/contact"
-              className="text-sm font-semibold text-gray-600 transition-colors hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+              className={`text-sm font-semibold transition-colors ${
+                isActive("/contact")
+                  ? "text-red-500"
+                  : "text-gray-600 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+              }`}
             >
               Contact
             </Link>
@@ -249,23 +283,35 @@ export function Navbar() {
             <Link
               onClick={() => setIsOpen(false)}
               href="/"
-              className="flex items-center rounded-xl px-4 py-3 text-[15px] font-medium text-gray-700 transition-all duration-200 hover:bg-red-50 hover:text-red-600 dark:text-gray-200 dark:hover:bg-red-500/10"
+              className={`flex items-center rounded-xl px-4 py-3 text-[15px] font-medium transition-all duration-200 ${
+                isActive("/")
+                  ? "bg-red-50 text-red-600 dark:bg-red-500/10"
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-600 dark:text-gray-200 dark:hover:bg-red-500/10"
+              }`}
             >
               Home
             </Link>
 
             <Link
               onClick={() => setIsOpen(false)}
-              href="#features"
-              className="block rounded-xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 dark:text-gray-200 dark:hover:bg-red-500/10"
+              href="/features"
+              className={`block rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                isActive("/features")
+                  ? "bg-red-50 text-red-600 dark:bg-red-500/10"
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-600 dark:text-gray-200 dark:hover:bg-red-500/10"
+              }`}
             >
               Features
             </Link>
 
             <Link
               onClick={() => setIsOpen(false)}
-              href="#roles"
-              className="block rounded-xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 dark:text-gray-200 dark:hover:bg-red-500/10"
+              href="/#roles"
+              className={`block rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                isActive("/#roles")
+                  ? "bg-red-50 text-red-600 dark:bg-red-500/10"
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-600 dark:text-gray-200 dark:hover:bg-red-500/10"
+              }`}
             >
               How it Works
             </Link>
@@ -273,7 +319,11 @@ export function Navbar() {
             <Link
               onClick={() => setIsOpen(false)}
               href="/contact"
-              className="block rounded-xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 dark:text-gray-200 dark:hover:bg-red-500/10"
+              className={`block rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 ${
+                isActive("/contact")
+                  ? "bg-red-50 text-red-600 dark:bg-red-500/10"
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-600 dark:text-gray-200 dark:hover:bg-red-500/10"
+              }`}
             >
               Contact
             </Link>
