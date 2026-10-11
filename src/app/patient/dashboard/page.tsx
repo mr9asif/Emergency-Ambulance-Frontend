@@ -24,7 +24,7 @@ export default function PatientDashboard() {
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
             Hello, {user?.name?.split(" ")[0] || "User"} 👋
           </h1>
-          <p className="text-slate-500 mt-1">Here is what's happening with your account today.</p>
+          <p className="text-slate-500 mt-1">Here is what is happening with your account today.</p>
         </div>
         <Link href="/patient/requests" className="shrink-0">
           <button className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-red-600 to-rose-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-500/30 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-red-500/40 active:scale-95">

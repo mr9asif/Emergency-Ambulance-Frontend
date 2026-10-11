@@ -34,14 +34,14 @@ export function useCurrentUser() {
     staleTime: 5 * 60 * 1000,
   });
 
-  console.log("🔥 useCurrentUser:", {
-    data: query.data,
-    isLoading: query.isLoading,
-    isFetching: query.isFetching,
-    isSuccess: query.isSuccess,
-    isError: query.isError,
-    error: query.error,
-  });
+  // console.log("🔥 useCurrentUser:", {
+  //   data: query.data,
+  //   isLoading: query.isLoading,
+  //   isFetching: query.isFetching,
+  //   isSuccess: query.isSuccess,
+  //   isError: query.isError,
+  //   error: query.error,
+  // });
 
   return query;
 }
