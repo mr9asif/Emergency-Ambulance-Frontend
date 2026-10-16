@@ -2,6 +2,7 @@
 
 import { useTrip } from "@/features/trip/hooks/useTrip";
 import { useConfirmPickup } from "@/features/trip/hooks/useConfirmPickup";
+import { usePayTrip } from "@/features/trip/hooks/usePayTrip";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ArrowLeft,
@@ -11,7 +12,10 @@ import {
   Phone,
   Ambulance,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Wallet,
+  Loader2,
+  CreditCard
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -23,6 +27,23 @@ export default function TripDetailsPage() {
 
   const { data: trip, isLoading, error } = useTrip(tripId);
   const { mutate: confirmPickup, isPending: isConfirming } = useConfirmPickup();
+  const { mutate: payTrip, isPending: isPaying } = usePayTrip();
+
+  const handleProceedPayment = () => {
+    payTrip(
+      {
+        tripId,
+      },
+      {
+        onSuccess: (res: any) => {
+          const redirectUrl = res?.gatewayPageUrl || res?.data?.gatewayPageUrl;
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+          }
+        },
+      }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -118,6 +139,42 @@ export default function TripDetailsPage() {
               >
                 <CheckCircle2 className="w-5 h-5" />
                 {isConfirming ? "Confirming..." : "Confirm Pickup"}
+              </button>
+            </div>
+          )}
+
+          {/* Action Card if Arrived at Hospital -> Payment Required */}
+          {currentStatus === "ARRIVED_AT_HOSPITAL" && (
+            <div className="bg-teal-50 rounded-3xl p-6 md:p-8 border border-teal-200 shadow-sm flex flex-col md:flex-row items-center gap-6 justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h2 className="text-xl font-bold text-teal-950">Arrived at Hospital - Payment Due</h2>
+                  {(trip.fareAmount || trip.fare) && (
+                    <span className="bg-teal-200 text-teal-900 text-xs font-bold px-2.5 py-0.5 rounded-md">
+                      ৳{trip.fareAmount || trip.fare}
+                    </span>
+                  )}
+                </div>
+                <p className="text-teal-800 text-sm">
+                  You have arrived at your destination hospital. Please proceed to SSLCommerz to complete the payment for this emergency trip.
+                </p>
+              </div>
+              <button
+                onClick={handleProceedPayment}
+                disabled={isPaying}
+                className="w-full md:w-auto shrink-0 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-teal-600/30 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPaying ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Redirecting to SSLCommerz...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-5 h-5" />
+                    Proceed to Payment
+                  </>
+                )}
               </button>
             </div>
           )}

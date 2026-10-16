@@ -27,11 +27,15 @@ export const confirmPickup = async (tripId: string) => {
 
 export const arriveHospital = async (tripId: string) => {
   try {
-    const response = await apiClient.patch(`/api/trip/${tripId}/arrive-hospital`);
+    const response = await apiClient.patch(
+      `/api/trip/${tripId}/arrive-hospital`,
+    );
     return response.data?.data ?? response.data;
   } catch (error: any) {
     if (error?.response?.status === 405) {
-      const response = await apiClient.post(`/api/trip/${tripId}/arrive-hospital`);
+      const response = await apiClient.post(
+        `/api/trip/${tripId}/arrive-hospital`,
+      );
       return response.data?.data ?? response.data;
     }
     throw error;
@@ -40,11 +44,18 @@ export const arriveHospital = async (tripId: string) => {
 
 export const createPayment = async (tripId: string, payload?: any) => {
   try {
-    const response = await apiClient.post(`/api/payment/${tripId}`, payload || {});
+    const response = await apiClient.post(
+      `/api/payment/${tripId}`,
+      payload || {},
+    );
     return response.data?.data ?? response.data;
   } catch (error: any) {
     if (error?.response?.status === 405) {
-      const response = await apiClient.patch(`/api/payment/${tripId}`, payload || {});
+      const response = await apiClient.patch(
+        `/api/payment/${tripId}`,
+        payload || {},
+      );
+      console.log("payment", response);
       return response.data?.data ?? response.data;
     }
     throw error;

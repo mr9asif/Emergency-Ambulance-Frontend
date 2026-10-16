@@ -1,15 +1,7 @@
 import { create } from "zustand";
 
-export type UserRole = "PATIENT" | "DISPATCHER" | "AMBULANCE_DRIVER" | "ADMIN";
-
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  profileImage?: string;
-  role: UserRole;
-}
+import type { AuthUser } from "@/features/auth/types/auth.types";
+export type { AuthUser };
 
 interface AuthState {
   user: AuthUser | null;

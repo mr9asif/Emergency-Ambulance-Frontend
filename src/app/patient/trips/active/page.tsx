@@ -6,7 +6,6 @@ import { useMyActiveTrip } from "@/features/trip/hooks/useMyActiveTrip";
 import { usePayTrip } from "@/features/trip/hooks/usePayTrip";
 import { ActiveTrip, EmergencyRequestStatus } from "@/features/trip/types/trip.types";
 import {
-  Activity,
   AlertCircle,
   AlertTriangle,
   Ambulance,
@@ -16,17 +15,15 @@ import {
   Clock,
   CreditCard,
   HeartPulse,
+  Loader2,
   MapPin,
   Navigation,
   Phone,
-  ShieldCheck,
   User,
   Wallet,
-  X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { toast } from "sonner";
 
 interface StatusDetail {
   label: string;
@@ -112,7 +109,7 @@ const statusConfig: Record<string, StatusDetail> = {
   },
   ARRIVED_AT_HOSPITAL: {
     label: "Arrived at Hospital",
-    subtitle: "Ambulance has reached the destination hospital. Please settle the trip payment.",
+    subtitle: "Ambulance has reached the destination hospital. Please proceed to payment to finalize.",
     color: "bg-teal-600",
     bgLight: "bg-teal-50",
     borderColor: "border-teal-200",
@@ -151,16 +148,12 @@ const journeySteps = [
 ];
 
 export default function ActiveTripPage() {
-  const router = useRouter();
   const { data: rawActiveTrip, isLoading } = useMyActiveTrip();
   const activeTrip = rawActiveTrip as ActiveTrip | undefined;
 
   const { mutate: confirmPickup, isPending: isConfirming } = useConfirmPickup();
   const { mutate: arriveHospital, isPending: isArrivingHospital } = useArriveHospital();
   const { mutate: payTrip, isPending: isPaying } = usePayTrip();
-
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"BKASH" | "NAGAD" | "CARD" | "CASH">("BKASH");
 
   if (isLoading) {
     return (
@@ -257,19 +250,18 @@ export default function ActiveTripPage() {
     arriveHospital(activeTrip.id);
   };
 
-  const handleExecutePayment = () => {
+  const handleProceedPayment = () => {
     payTrip(
       {
         tripId: activeTrip.id,
-        data: {
-          paymentMethod: selectedPaymentMethod,
-          amount: fareAmount,
-        },
       },
       {
-        onSuccess: () => {
-          setIsPaymentModalOpen(false);
-          router.push("/patient/trips/history");
+        onSuccess: (res: any) => {
+          const redirectUrl = res?.gatewayPageUrl || res?.data?.gatewayPageUrl;
+          if (redirectUrl) {
+            toast.success("Redirecting to SSLCommerz...");
+            window.location.href = redirectUrl;
+          }
         },
       }
     );
@@ -470,7 +462,7 @@ export default function ActiveTripPage() {
                 </div>
               )}
 
-              {/* 3. When ARRIVED_AT_HOSPITAL -> Option to Pay */}
+              {/* 3. When ARRIVED_AT_HOSPITAL -> Direct SSLCommerz Payment Redirect */}
               {currentStatus === "ARRIVED_AT_HOSPITAL" && (
                 <div className="bg-teal-50/90 border border-teal-200 rounded-2xl p-5 sm:p-6 mb-2">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -483,21 +475,33 @@ export default function ActiveTripPage() {
                           <h3 className="font-bold text-teal-950 text-base">
                             Arrived at Hospital - Payment Due
                           </h3>
-                          <span className="bg-teal-200 text-teal-900 text-xs font-bold px-2 py-0.5 rounded-md">
-                            ৳{fareAmount}
-                          </span>
+                          {activeTrip.fareAmount && (
+                            <span className="bg-teal-200 text-teal-900 text-xs font-bold px-2 py-0.5 rounded-md">
+                              ৳{activeTrip.fareAmount}
+                            </span>
+                          )}
                         </div>
                         <p className="text-teal-800 text-xs sm:text-sm mt-0.5">
-                          You have arrived at {hospital?.name || "the hospital"}. Complete payment to finalize this trip.
+                          You have arrived at {hospital?.name || "the hospital"}. Proceed to SSLCommerz to complete the payment.
                         </p>
                       </div>
                     </div>
                     <button
-                      onClick={() => setIsPaymentModalOpen(true)}
-                      className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-7 py-3.5 rounded-xl font-bold shadow-lg shadow-teal-600/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                      onClick={handleProceedPayment}
+                      disabled={isPaying}
+                      className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-7 py-3.5 rounded-xl font-bold shadow-lg shadow-teal-600/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <Wallet className="w-5 h-5" />
-                      Pay Trip Fare (৳{fareAmount})
+                      {isPaying ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Redirecting to SSLCommerz...
+                        </>
+                      ) : (
+                        <>
+                          <Wallet className="w-5 h-5" />
+                          Proceed to Payment {activeTrip.fareAmount ? `(৳${activeTrip.fareAmount})` : ""}
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -757,116 +761,32 @@ export default function ActiveTripPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Includes emergency response dispatch, certified EMT care, and transport to destination.
+                Secure online payment processed through SSLCommerz gateway.
               </p>
 
               {currentStatus === "ARRIVED_AT_HOSPITAL" && (
                 <button
-                  onClick={() => setIsPaymentModalOpen(true)}
-                  className="w-full mt-3 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-teal-600/25 transition-all text-sm flex items-center justify-center gap-2"
+                  onClick={handleProceedPayment}
+                  disabled={isPaying}
+                  className="w-full mt-3 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-teal-600/25 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Wallet className="w-4 h-4" />
-                  Proceed to Payment
+                  {isPaying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Redirecting to SSLCommerz...
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="w-4 h-4" />
+                      Proceed to Payment
+                    </>
+                  )}
                 </button>
               )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* PAYMENT MODAL */}
-      {isPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative">
-            <button
-              onClick={() => setIsPaymentModalOpen(false)}
-              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mb-4">
-              <CreditCard className="w-6 h-6" />
-            </div>
-
-            <h3 className="text-xl font-extrabold text-slate-900">
-              Trip Fare Payment
-            </h3>
-            <p className="text-slate-500 text-xs sm:text-sm mt-1">
-              Complete payment for Trip #{activeTrip.tripNumber || activeTrip.id.substring(0, 8)}
-            </p>
-
-            {/* Bill Summary */}
-            <div className="bg-slate-50 rounded-2xl p-4 my-5 border border-slate-100 space-y-2">
-              <div className="flex justify-between text-xs text-slate-500 font-medium">
-                <span>Destination Hospital</span>
-                <span className="font-semibold text-slate-700">{hospital?.name || "Hospital"}</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-500 font-medium">
-                <span>Ambulance Unit</span>
-                <span className="font-semibold text-slate-700">{ambulance?.registrationNumber || "Standard"}</span>
-              </div>
-              <div className="pt-2 border-t border-slate-200/80 flex justify-between items-baseline">
-                <span className="text-sm font-bold text-slate-900">Total Payable</span>
-                <span className="text-xl font-extrabold text-teal-600">৳{fareAmount}</span>
-              </div>
-            </div>
-
-            {/* Payment Method Selector */}
-            <div className="space-y-2 mb-6">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Select Payment Method
-              </p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { id: "BKASH", label: "bKash", desc: "Mobile Wallet" },
-                  { id: "NAGAD", label: "Nagad", desc: "Mobile Wallet" },
-                  { id: "CARD", label: "Debit/Credit", desc: "Visa / Mastercard" },
-                  { id: "CASH", label: "Cash", desc: "Pay on Arrival" },
-                ].map((method) => (
-                  <button
-                    key={method.id}
-                    type="button"
-                    onClick={() => setSelectedPaymentMethod(method.id as any)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      selectedPaymentMethod === method.id
-                        ? "border-teal-600 bg-teal-50/60 ring-2 ring-teal-600/20 text-teal-950"
-                        : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
-                    }`}
-                  >
-                    <p className="font-bold text-xs">{method.label}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{method.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100 mb-6">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Encrypted healthcare transaction processed directly.</span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setIsPaymentModalOpen(false)}
-                className="flex-1 py-3 px-4 border border-slate-200 text-slate-700 rounded-xl font-semibold text-sm hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleExecutePayment}
-                disabled={isPaying}
-                className="flex-1 py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-teal-600/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isPaying ? "Processing..." : `Pay ৳${fareAmount}`}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

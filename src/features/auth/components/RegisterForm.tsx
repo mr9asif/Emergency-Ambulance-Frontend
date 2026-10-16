@@ -27,7 +27,7 @@ import type { UserRole } from "../types/auth.types";
 export default function RegisterPage() {
   const router = useRouter();
   const { mutate: registerMutation, isPending } = useRegister();
-  const [role, setRole] = useState<UserRole>("PATIENT");
+  const [role, setRole] = useState<"PATIENT" | "AMBULANCE_DRIVER" | "DISPATCHER">("PATIENT");
 
   const {
     register,

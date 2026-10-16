@@ -113,9 +113,17 @@ export function Navbar() {
             {/* Dashboard */}
             {!isLoading && user && (
               <Link
-                href="/patient/dashboard"
+                href={
+                  user.role === UserRole.ADMIN
+                    ? "/admin/dashboard"
+                    : user.role === UserRole.OPERATOR
+                    ? "/dispatcher/dashboard"
+                    : "/patient/dashboard"
+                }
                 className={`text-sm font-semibold transition-colors ${
-                  isActive("/patient/dashboard")
+                  isActive("/patient/dashboard") ||
+                  isActive("/admin/dashboard") ||
+                  isActive("/dispatcher/dashboard")
                     ? "text-red-500"
                     : "text-gray-600 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
                 }`}
@@ -291,6 +299,22 @@ export function Navbar() {
             >
               Home
             </Link>
+
+            {!isLoading && user && (
+              <Link
+                onClick={() => setIsOpen(false)}
+                href={
+                  user.role === UserRole.ADMIN
+                    ? "/admin/dashboard"
+                    : user.role === UserRole.OPERATOR
+                    ? "/dispatcher/dashboard"
+                    : "/patient/dashboard"
+                }
+                className="flex items-center rounded-xl px-4 py-3 text-[15px] font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+              >
+                Dashboard
+              </Link>
+            )}
 
             <Link
               onClick={() => setIsOpen(false)}
