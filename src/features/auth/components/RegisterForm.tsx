@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Ambulance,
   ArrowRight,
@@ -15,19 +16,20 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { registerSchema, type RegisterFormValues } from "../schemas/auth.schema";
+
 import { useRegister } from "../hooks/useRegister";
-import type { UserRole } from "../types/auth.types";
+import {
+  registerSchema,
+  type RegisterFormValues,
+} from "../schemas/auth.schema";
 
 export default function RegisterPage() {
   const router = useRouter();
+
   const { mutate: registerMutation, isPending } = useRegister();
-  const [role, setRole] = useState<"PATIENT" | "AMBULANCE_DRIVER" | "DISPATCHER">("PATIENT");
 
   const {
     register,
@@ -37,19 +39,17 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
+  // Registration Submit
   const onSubmit = (data: RegisterFormValues) => {
-    registerMutation(
-      { ...data, role },
-      {
-        onSuccess: (res) => {
-          toast.success(res?.message || "Registration successful!");
-          router.push("/login");
-        },
-        onError: (error: any) => {
-          toast.error(error?.response?.data?.message || "An error occurred");
-        },
+    registerMutation(data, {
+      onSuccess: (res) => {
+        toast.success(res?.message || "Registration successful!");
+        router.push("/verify-email");
       },
-    );
+      onError: (error: any) => {
+        toast.error(error?.response?.data?.message || "An error occurred");
+      },
+    });
   };
 
   return (
@@ -231,55 +231,13 @@ export default function RegisterPage() {
             </h1>
 
             <p className="mt-1.5 text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-              Join SwiftRescue today. Select your account type below.
+              Join SwiftRescue today. Create your account to get started.
             </p>
           </div>
 
           {/* Form Area */}
           <div className="mt-5">
-            {/* Role Selector */}
-            <div className="flex p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl mb-4 border border-zinc-200 dark:border-zinc-800">
-              {/* Patient */}
-              <button
-                type="button"
-                onClick={() => setRole("PATIENT")}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                  role === "PATIENT"
-                    ? "bg-white dark:bg-zinc-800 text-gray-900 dark:text-white shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                }`}
-              >
-                Patient
-              </button>
-
-              {/* Driver */}
-              <button
-                type="button"
-                onClick={() => setRole("AMBULANCE_DRIVER")}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                  role === "AMBULANCE_DRIVER"
-                    ? "bg-white dark:bg-zinc-800 text-gray-900 dark:text-white shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                }`}
-              >
-                Driver
-              </button>
-
-              {/* Dispatcher / Hospital */}
-              <button
-                type="button"
-                onClick={() => setRole("DISPATCHER")}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                  role === "DISPATCHER"
-                    ? "bg-white dark:bg-zinc-800 text-gray-900 dark:text-white shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                }`}
-              >
-                Hospital
-              </button>
-            </div>
-
-            {/* Form */}
+            {/* Registration Form */}
             <form className="space-y-2.5" onSubmit={handleSubmit(onSubmit)}>
               {/* Full Name */}
               <div>
@@ -303,7 +261,12 @@ export default function RegisterPage() {
                     className="appearance-none block w-full pl-10 pr-3 py-2.5 sm:py-3 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white transition"
                   />
                 </div>
-                {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
+
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
 
               {/* Email */}
@@ -328,7 +291,12 @@ export default function RegisterPage() {
                     className="appearance-none block w-full pl-10 pr-3 py-2.5 sm:py-3 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white transition"
                   />
                 </div>
-                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
+
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
               {/* Phone */}
@@ -353,7 +321,12 @@ export default function RegisterPage() {
                     className="appearance-none block w-full pl-10 pr-3 py-2.5 sm:py-3 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white transition"
                   />
                 </div>
-                {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone.message}</p>}
+
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
 
               {/* Password */}
@@ -378,7 +351,12 @@ export default function RegisterPage() {
                     className="appearance-none block w-full pl-10 pr-3 py-2.5 sm:py-3 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white transition"
                   />
                 </div>
-                {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>}
+
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               {/* Submit */}
@@ -389,6 +367,7 @@ export default function RegisterPage() {
                   className="w-full flex justify-center items-center gap-2 py-2.5 sm:py-3 px-4 rounded-xl shadow-md shadow-red-500/20 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isPending ? "Creating Account..." : "Create Account"}
+
                   {!isPending && <ArrowRight className="w-4 h-4" />}
                 </button>
               </div>
