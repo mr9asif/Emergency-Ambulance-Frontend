@@ -1,6 +1,10 @@
 "use client";
 
-import axios from "axios";
+import { isAxiosError } from "axios";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
+
 import {
   Ambulance,
   ArrowRight,
@@ -9,62 +13,127 @@ import {
   ShieldCheck,
   Siren,
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
-export default function Page() {
+import { useVerifyAuthEmail } from "@/features/auth/hooks/useVerifyEmail";
+import { useVerifyOperatorEmail } from "@/features/operator-application/hooks/use-operator-application";
+import { toast } from "sonner";
+
+type VerificationType = "AUTH" | "OPERATOR_APPLICATION";
+
+interface VerifyEmailFormProps {
+  initialEmail: string;
+  verificationType: VerificationType;
+}
+
+interface VerificationResponse {
+  success: boolean;
+  message: string;
+}
+
+// ---------------------------------------------
+// Verification Form
+// ---------------------------------------------
+
+function VerifyEmailForm({
+  initialEmail,
+  verificationType,
+}: VerifyEmailFormProps) {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  // Form states
+  const [email, setEmail] = useState(initialEmail);
   const [otp, setOtp] = useState("");
-  const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleVerifyEmail = async (e: React.FormEvent) => {
+  // React Query mutations
+  const authMutation = useVerifyAuthEmail();
+  const operatorMutation = useVerifyOperatorEmail();
+
+  const isLoading = authMutation.isPending || operatorMutation.isPending;
+
+  const isOperator = verificationType === "OPERATOR_APPLICATION";
+
+  // ---------------------------------------------
+  // Handle Email Verification
+  // ---------------------------------------------
+
+  const handleVerifyEmail = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setError("");
     setSuccess("");
 
-    if (!email || !otp) {
+    // Validate email
+    if (!email.trim() || !otp.trim()) {
       setError("Please enter your email and OTP.");
       return;
     }
 
+    // Validate OTP
+    if (!/^\d{6}$/.test(otp)) {
+      setError("Please enter a valid 6-digit OTP.");
+      return;
+    }
+
+    const payload = {
+      email: email.trim().toLowerCase(),
+      otp,
+    };
+
     try {
-      setLoading(true);
+      let response: VerificationResponse;
 
-      const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-email`,
-        {
-          email,
-          otp,
-        },
-      );
+      // Select verification API
+      if (isOperator) {
+        response = await operatorMutation.mutateAsync(payload);
+      } else {
+        response = await authMutation.mutateAsync(payload);
+      }
 
-      setSuccess(data.message || "Email verified successfully!");
+      if (response.success) {
+        if (isOperator) {
+          toast.success("Email verified successfully!", {
+            description:
+              "Your operator application is now under review. Please check your email for further updates.",
+            duration: 4000,
+          });
 
-      setTimeout(() => {
-        router.push("/login");
-      }, 1000);
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Invalid OTP or email verification failed.",
-      );
-    } finally {
-      setLoading(false);
+          setTimeout(() => {
+            router.push("/");
+          }, 2500);
+        } else {
+          toast.success("Email verified successfully!", {
+            description: response.message,
+            duration: 3000,
+          });
+
+          setTimeout(() => {
+            router.push("/login");
+          }, 2000);
+        }
+      } else {
+        setError(response.message || "Email verification failed.");
+      }
+    } catch (err: unknown) {
+      if (isAxiosError<{ message?: string }>(err)) {
+        setError(
+          err.response?.data?.message ||
+            "Invalid OTP or email verification failed.",
+        );
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     }
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#09090b] flex items-center justify-center px-4 py-10 selection:bg-red-500/30">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#09090b] px-4 py-10 selection:bg-red-500/30">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-[#09090b] to-black" />
 
-      <div className="absolute -top-40 -right-40 h-[450px] w-[450px] rounded-full bg-red-600/10 blur-[130px]" />
+      <div className="absolute -right-40 -top-40 h-[450px] w-[450px] rounded-full bg-red-600/10 blur-[130px]" />
 
       <div className="absolute -bottom-40 -left-40 h-[450px] w-[450px] rounded-full bg-red-600/10 blur-[130px]" />
 
@@ -83,7 +152,7 @@ export default function Page() {
         {/* Brand */}
         <Link
           href="/"
-          className="mb-8 flex items-center justify-center gap-3 group"
+          className="group mb-8 flex items-center justify-center gap-3"
         >
           <div className="rounded-xl bg-red-600 p-2.5 text-white shadow-lg shadow-red-600/20 transition-transform group-hover:scale-105">
             <Ambulance size={27} strokeWidth={2.5} />
@@ -93,6 +162,7 @@ export default function Page() {
             <h2 className="text-2xl font-extrabold tracking-tight text-white">
               SwiftRescue
             </h2>
+
             <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500">
               Emergency Dispatch Platform
             </p>
@@ -117,9 +187,11 @@ export default function Page() {
 
               <div className="mb-2 flex items-center justify-center gap-2">
                 <span className="h-px w-7 bg-red-500/60" />
+
                 <span className="text-xs font-semibold uppercase tracking-[0.2em] text-red-400">
-                  Account Security
+                  {isOperator ? "Operator Verification" : "Account Security"}
                 </span>
+
                 <span className="h-px w-7 bg-red-500/60" />
               </div>
 
@@ -128,8 +200,9 @@ export default function Page() {
               </h1>
 
               <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-zinc-400">
-                One final step! Verify your email address to activate your
-                SwiftRescue account.
+                {isOperator
+                  ? "Verify your email address to complete your operator application."
+                  : "One final step! Verify your email address to activate your SwiftRescue account."}
               </p>
             </div>
 
@@ -187,7 +260,7 @@ export default function Page() {
                 </p>
               </div>
 
-              {/* Error Message */}
+              {/* Error */}
               {error && (
                 <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5">
                   <Siren size={18} className="mt-0.5 shrink-0 text-red-400" />
@@ -198,7 +271,7 @@ export default function Page() {
                 </div>
               )}
 
-              {/* Success Message */}
+              {/* Success */}
               {success && (
                 <div className="flex items-start gap-3 rounded-xl border border-green-500/20 bg-green-500/10 p-3.5">
                   <ShieldCheck
@@ -215,10 +288,10 @@ export default function Page() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isLoading || !!success}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? (
+                {isLoading ? (
                   <>
                     <Loader2 size={19} className="animate-spin" />
                     Verifying...
@@ -251,9 +324,10 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Bottom Security Note */}
+        {/* Security Note */}
         <div className="mt-6 flex items-center justify-center gap-2 text-xs text-zinc-600">
           <ShieldCheck size={15} className="text-green-500" />
+
           <span>Your information is securely protected by SwiftRescue.</span>
         </div>
 
@@ -262,5 +336,46 @@ export default function Page() {
         </p>
       </div>
     </main>
+  );
+}
+
+// ---------------------------------------------
+// Read URL Parameters
+// ---------------------------------------------
+
+function VerifyEmailContent() {
+  const searchParams = useSearchParams();
+
+  const emailFromUrl = searchParams.get("email") ?? "";
+
+  const typeFromUrl = searchParams.get("type");
+
+  const verificationType: VerificationType =
+    typeFromUrl === "OPERATOR_APPLICATION" ? "OPERATOR_APPLICATION" : "AUTH";
+
+  return (
+    <VerifyEmailForm
+      key={`${emailFromUrl}-${verificationType}`}
+      initialEmail={emailFromUrl}
+      verificationType={verificationType}
+    />
+  );
+}
+
+// ---------------------------------------------
+// Page Component
+// ---------------------------------------------
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#09090b] text-white">
+          Loading verification...
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

@@ -15,6 +15,22 @@ interface CurrentUserResponse {
   message: string;
   data: AuthUser;
 }
+// Verify Email
+export interface VerifyEmailRequest {
+  email: string;
+  otp: string;
+}
+
+export const verifyAuthEmail = async (
+  payload: VerifyEmailRequest,
+): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>(
+    "/api/auth/verify-email",
+    payload,
+  );
+
+  return response.data;
+};
 
 export const getCurrentUser = async (): Promise<AuthUser> => {
   const response = await apiClient.get<CurrentUserResponse>("/api/auth/me");

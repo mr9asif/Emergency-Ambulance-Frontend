@@ -11,11 +11,12 @@ export interface OperatorApplicationPayload {
 export interface OperatorApplicationResponse {
   success: boolean;
   message: string;
-  data?: {
-    id: string;
+  data: {
     name: string;
     email: string;
+    phone: string;
     operatorType: OperatorType;
-    status: string;
+    licenseNumber?: string;
+    message: string;
   };
 }
